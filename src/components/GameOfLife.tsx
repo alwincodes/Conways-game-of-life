@@ -21,6 +21,19 @@ const generateArrayMatrix = (size: Dimension, empty?: boolean): number[][] => {
     return resArr;
 };
 
+//styles
+const gameOfLifeStyle = {
+    margin: "10px auto",
+    width: "fit-content",
+};
+const buttonBaseStyle = {
+    borderRadius: 10,
+    padding: 10,
+    color: "white",
+    backgroundColor: "turquoise",
+    margin: 5,
+};
+
 const compareArr = [
     [-1, -1],
     [-1, 0],
@@ -112,25 +125,15 @@ export const GameOfLife: React.FC<GameOfLifeProps> = ({
     };
 
     return (
-        <div className="gameOfLife" style={{ margin: "10px 0px" }}>
+        <div className="gameOfLife" style={gameOfLifeStyle}>
             <button
-                style={{
-                    padding: 10,
-                    color: "white",
-                    backgroundColor: "turquoise",
-                    margin: 5,
-                }}
+                style={{ ...buttonBaseStyle }}
                 onClick={() => setArr(generateArrayMatrix(dimension, false))}
             >
                 Generate Random Seed
             </button>
             <button
-                style={{
-                    padding: 10,
-                    color: "white",
-                    backgroundColor: "turquoise",
-                    margin: 5,
-                }}
+                style={{ ...buttonBaseStyle }}
                 onClick={() => {
                     setSim((s) => !s);
                     if (!sim) {
@@ -140,6 +143,15 @@ export const GameOfLife: React.FC<GameOfLifeProps> = ({
                 }}
             >
                 {sim ? "stop simulation" : "start simulation"}
+            </button>
+            <button
+                style={{ ...buttonBaseStyle, backgroundColor: "#FFD403" }}
+                onClick={() => {
+                    setSim((sim) => !sim);
+                    setArr(generateArrayMatrix(dimension, true));
+                }}
+            >
+                reset
             </button>
             {/* render the array as a 2x2 matrix */}
             {arr.map((a, i) => {
