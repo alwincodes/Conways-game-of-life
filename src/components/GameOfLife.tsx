@@ -9,8 +9,8 @@ interface GameOfLifeProps {
 
 const generateArrayMatrix = (size: Dimension, empty?: boolean): number[][] => {
     let { w: j, h: i } = size;
-    i /= 28;
-    j /= 26;
+    i /= 30;
+    j /= 28;
     let resArr: number[][] = [];
     for (let ii = 0; ii < i; ii++) {
         resArr[ii] = [];
@@ -30,7 +30,7 @@ const buttonBaseStyle = {
     borderRadius: 10,
     padding: 10,
     color: "white",
-    backgroundColor: "turquoise",
+    backgroundColor: "#1E3163",
     margin: 5,
 };
 
@@ -50,29 +50,35 @@ export const GameOfLife: React.FC<GameOfLifeProps> = ({
     children: _children,
 }) => {
     const dimension = useWindowDimension(); //custom hook that calculates dimensions in real-time
+    //when dimension changes create new array to fit screen
     const [arr, setArr] = useState<number[][]>(
         generateArrayMatrix(dimension, true)
     );
-    const [sim, setSim] = useState<boolean>(false);
-    const isSimRunning = useRef(sim);
-    isSimRunning.current = sim;
-    //when dimension changes create new array to fit screen
+
     const firstUpdate = useRef(true);
     useEffect(() => {
         if (firstUpdate.current) {
             firstUpdate.current = false;
             return;
         }
+        setSim((sim) => (sim = false));
         setArr(generateArrayMatrix(dimension, true));
     }, [dimension]);
 
     //to start the simulation
+    const [sim, setSim] = useState<boolean>(false);
+    const isSimRunning = useRef(sim);
+    isSimRunning.current = sim;
+    const simCount = useRef(0);
+    const aliveCount = useRef(0);
+
     const simulation = useCallback(() => {
         //used Memoization due to function being huge to remake every render
         if (!isSimRunning.current) return;
         //compare every element with the neighbours and change state every 200ms
         //using immer library to make the process easy
-        console.log("we Running");
+        simCount.current += 1;
+        aliveCount.current = 0;
         setArr((arr) =>
             produce(arr, (draft) => {
                 const a1Len = arr.length;
@@ -82,6 +88,7 @@ export const GameOfLife: React.FC<GameOfLifeProps> = ({
                         //getting the nested array length
                         //calculating all the other index
                         let totalSum = 0;
+                        aliveCount.current += arr[i][j];
                         for (let k = 0; k < compareArr.length; k++) {
                             let [a, b] = compareArr[k];
                             a += i;
@@ -119,40 +126,50 @@ export const GameOfLife: React.FC<GameOfLifeProps> = ({
         i: number,
         j: number
     ) => {
-        let newArr = [...arr];
-        newArr[i][j] = newArr[i][j] ? 0 : 1; // 1 is truthy and 0 is falsy ie if pos = 1 then = of if pos = 0 then 1
-        setArr(newArr);
+        setArr((arr) =>
+            produce(arr, (draft) => {
+                draft[i][j] = draft[i][j] ? 0 : 1; // 1 is truthy and 0 is falsy ie if pos = 1 then = of if pos = 0 then 1
+            })
+        );
     };
 
     return (
         <div className="gameOfLife" style={gameOfLifeStyle}>
-            <button
-                style={{ ...buttonBaseStyle }}
-                onClick={() => setArr(generateArrayMatrix(dimension, false))}
-            >
-                Generate Random Seed
-            </button>
-            <button
-                style={{ ...buttonBaseStyle }}
-                onClick={() => {
-                    setSim((s) => !s);
-                    if (!sim) {
-                        isSimRunning.current = true;
-                        simulation();
-                    }
-                }}
-            >
-                {sim ? "stop simulation" : "start simulation"}
-            </button>
-            <button
-                style={{ ...buttonBaseStyle, backgroundColor: "#FFD403" }}
-                onClick={() => {
-                    setSim((sim) => !sim);
-                    setArr(generateArrayMatrix(dimension, true));
-                }}
-            >
-                reset
-            </button>
+            <div className="buttons" style={{ margin: "5px 2px" }}>
+                <button
+                    style={{ ...buttonBaseStyle }}
+                    onClick={() => {
+                        simCount.current = 0;
+                        aliveCount.current = 0;
+                        setArr(generateArrayMatrix(dimension, false));
+                    }}
+                >
+                    Generate Random Seed
+                </button>
+                <button
+                    style={{ ...buttonBaseStyle }}
+                    onClick={() => {
+                        setSim((s) => !s);
+                        if (!sim) {
+                            isSimRunning.current = true;
+                            simulation();
+                        }
+                    }}
+                >
+                    {sim ? "stop simulation" : "start simulation"}
+                </button>
+                <button
+                    style={{ ...buttonBaseStyle, backgroundColor: "#FC5404" }}
+                    onClick={() => {
+                        simCount.current = 0;
+                        aliveCount.current = 0;
+                        setSim((sim) => (sim = false));
+                        setArr(generateArrayMatrix(dimension, true));
+                    }}
+                >
+                    reset
+                </button>
+            </div>
             {/* render the array as a 2x2 matrix */}
             {arr.map((a, i) => {
                 return (
@@ -169,6 +186,7 @@ export const GameOfLife: React.FC<GameOfLifeProps> = ({
                                         padding: "2px 7px",
                                         display: "inline",
                                         border: "1px solid black",
+                                        color: d === 1 ? "white" : "black",
                                         backgroundColor:
                                             d === 1 ? color : "white",
                                     }}
@@ -181,6 +199,10 @@ export const GameOfLife: React.FC<GameOfLifeProps> = ({
                     </div>
                 );
             })}
+            <p style={{ margin: "4px 5px", fontWeight: "bolder" }}>
+                Generation count: {simCount.current}, alive count:{" "}
+                {aliveCount.current}
+            </p>
         </div>
     );
 };
